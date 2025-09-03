@@ -1,103 +1,65 @@
-import Image from "next/image";
+import { palette } from "../theme/colors"
 
-export default function Home() {
+export default function Page() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="min-h-dvh bg-white text-slate-900">
+      <section className="mx-auto w-full max-w-2xl px-6 py-12">
+        <h1 className="text-pretty text-3xl font-bold" style={{ color: palette.primary }}>
+          Coastal Fishing MVP — Frontend Scaffold
+        </h1>
+        <p className="mt-3 text-slate-600">
+          This project contains a React Native (Expo) mobile UI focused on offline-first features. The page you are
+          viewing is a minimal Next.js preview to satisfy build requirements.
+        </p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <div className="mt-8 grid gap-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h2 className="text-lg font-semibold">Features (mobile app)</h2>
+            <ul className="mt-2 list-disc pl-5 text-slate-700">
+              <li>GPS map with safe/restricted zone overlays and boundary checks</li>
+              <li>Offline catch logbook with local caching</li>
+              <li>Weather view with cached forecasts (OpenWeather integration stubbed)</li>
+              <li>Trip planning with simple route optimization</li>
+              <li>Alerts for weather, seasonal bans, and boundary warnings</li>
+              <li>Settings for low-power GPS polling and cache management</li>
+            </ul>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h2 className="text-lg font-semibold">Key Files</h2>
+            <ul className="mt-2 space-y-1 text-sm text-slate-700">
+              <li>
+                <code className="rounded bg-slate-100 px-1 py-0.5">App.tsx</code> (Expo root, tabs)
+              </li>
+              <li>
+                <code className="rounded bg-slate-100 px-1 py-0.5">screens/</code> (Map, Logbook, Weather, Trip, Alerts,
+                Settings)
+              </li>
+              <li>
+                <code className="rounded bg-slate-100 px-1 py-0.5">services/</code> (storage, weather, alerts stubs)
+              </li>
+              <li>
+                <code className="rounded bg-slate-100 px-1 py-0.5">utils/geo.ts</code> (haversine, point-in-polygon,
+                optimization)
+              </li>
+              <li>
+                <code className="rounded bg-slate-100 px-1 py-0.5">data/zones.ts</code> (mock zones)
+              </li>
+              <li>
+                <code className="rounded bg-slate-100 px-1 py-0.5">theme/colors.ts</code> (palette)
+              </li>
+            </ul>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h2 className="text-lg font-semibold">Notes</h2>
+            <p className="mt-2 text-slate-700">
+              Backend/APIs are intentionally stubbed to prioritize the offline-first UI. When ready, integrate Firebase
+              Firestore for sync and OpenWeather for forecasts.
+            </p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+      </section>
+    </main>
+  )
 }
