@@ -15,22 +15,19 @@ import {
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { theme } from "../theme/colors"
+import { authService } from "../services/auth"
 
 const { width, height } = Dimensions.get("window")
 
 interface RegisterScreenProps {
-  onRegister: (userData: {
-    fullName: string
-    email: string
-    password: string
-    confirmPassword: string
-  }) => void
+  onRegister: (user: any) => void
   onNavigateToLogin: () => void
 }
 
 export default function RegisterScreen({ onRegister, onNavigateToLogin }: RegisterScreenProps) {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -65,8 +62,18 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin }: Regist
   }, [])
 
   const handleRegister = async () => {
-    if (!fullName || !email || !password || !confirmPassword) {
+    if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields")
+      return
+    }
+
+    if (!email.includes('@')) {
+      Alert.alert("Error", "Please enter a valid email address")
+      return
+    }
+
+    if (phoneNumber.length < 10) {
+      Alert.alert("Error", "Please enter a valid phone number")
       return
     }
 
@@ -86,11 +93,55 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin }: Regist
     }
 
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      const user = await authService.registerWithEmail(
+        email,
+        password,
+        fullName,
+        {
+          // Additional profile data
+          phoneNumber,
+          location: {
+            state: "",
+            port: ""
+          },
+          experience: {
+            yearsOfFishing: 0,
+            specialization: [],
+            preferredZones: []
+          }
+        }
+      )
+      
+      Alert.alert(
+        "Registration Successful",
+        "Your account has been created successfully! You can now start using SeaSure.",
+        [
+          {
+            text: "OK",
+            onPress: () => onRegister(user)
+          }
+        ]
+      )
+    } catch (error: any) {
+      console.error('Registration error:', error)
+      let errorMessage = "Registration failed. Please try again."
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "An account with this email already exists. Please try logging in instead."
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Please enter a valid email address."
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password is too weak. Please choose a stronger password."
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Network error. Please check your internet connection."
+      }
+      
+      Alert.alert("Registration Failed", errorMessage)
+    } finally {
       setIsLoading(false)
-      onRegister({ fullName, email, password, confirmPassword })
-    }, 2000)
+    }
   }
 
   const buttonScale = useRef(new Animated.Value(1)).current
@@ -175,6 +226,20 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin }: Regist
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons name="call-outline" size={20} color={theme.primary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Phone Number"
+                  placeholderTextColor="#94a3b8"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  keyboardType="phone-pad"
                   autoCapitalize="none"
                   autoCorrect={false}
                 />

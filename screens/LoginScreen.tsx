@@ -15,11 +15,12 @@ import {
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { theme } from "../theme/colors"
+import { authService } from "../services/auth"
 
 const { width, height } = Dimensions.get("window")
 
 interface LoginScreenProps {
-  onLogin: (email: string, password: string) => void
+  onLogin: (user: any) => void
   onNavigateToRegister: () => void
   onForgotPassword: () => void
 }
@@ -62,12 +63,60 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
       return
     }
 
+    if (!email.includes('@')) {
+      Alert.alert("Error", "Please enter a valid email address")
+      return
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters")
+      return
+    }
+
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      const user = await authService.signInWithEmail(email, password)
+      Alert.alert("Success", "Login successful!")
+      onLogin(user)
+    } catch (error: any) {
+      console.error('Login error:', error)
+      let errorMessage = "Login failed. Please try again."
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = "No account found with this email address."
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = "Incorrect password. Please try again."
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Please enter a valid email address."
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = "Too many failed attempts. Please try again later."
+      }
+      
+      Alert.alert("Login Failed", errorMessage)
+    } finally {
       setIsLoading(false)
-      onLogin(email, password)
-    }, 1500)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true)
+      const user = await authService.signInWithGoogle()
+      Alert.alert("Success", "Google Sign-In successful!")
+      onLogin(user)
+    } catch (error: any) {
+      console.error('Google Sign-In error:', error)
+      let errorMessage = "Google Sign-In failed."
+      
+      if (error.message.includes('additional setup')) {
+        errorMessage = "Google Sign-In requires additional setup in Firebase Console. Please use email/password login for now."
+      }
+      
+      Alert.alert("Google Sign-In", errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const buttonScale = useRef(new Animated.Value(1)).current
@@ -194,14 +243,12 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
                 <View style={styles.dividerLine} />
               </View>
 
-              <TouchableOpacity style={styles.socialButton}>
+              <TouchableOpacity 
+                style={styles.socialButton}
+                onPress={handleGoogleSignIn}
+              >
                 <Ionicons name="logo-google" size={20} color="#4285f4" />
                 <Text style={styles.socialButtonText}>Continue with Google</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-apple" size={20} color="#000000" />
-                <Text style={styles.socialButtonText}>Continue with Apple</Text>
               </TouchableOpacity>
             </View>
 

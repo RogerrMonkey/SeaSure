@@ -4,7 +4,7 @@
     "slug": "coastal-fishing-mvp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "coastal-fishing",
+    "scheme": "seasure",
     "splash": {
       "backgroundColor": "#0F766E",
       "resizeMode": "contain"
@@ -21,7 +21,8 @@
     "plugins": [
       "expo-location",
       "expo-notifications",
-      "expo-maps"
+      "expo-maps",
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

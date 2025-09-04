@@ -3,24 +3,18 @@ import { View, StyleSheet, Animated } from "react-native"
 import LoginScreen from "./LoginScreen"
 import RegisterScreen from "./RegisterScreen"
 import UserProfileScreen from "./UserProfileScreen"
+import { User } from "firebase/auth"
 
 type AuthState = "login" | "register" | "authenticated" | "profile"
 
 interface AuthManagerProps {
-  onAuthenticated: () => void
+  onAuthenticated: (user: User) => void
   onBack: () => void
-}
-
-interface User {
-  id: string
-  fullName: string
-  email: string
-  avatar?: string
 }
 
 export default function AuthManager({ onAuthenticated, onBack }: AuthManagerProps) {
   const [authState, setAuthState] = useState<AuthState>("login")
-  const [user, setUser] = useState<User | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
 
   // Animation for smooth transitions
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -42,45 +36,24 @@ export default function AuthManager({ onAuthenticated, onBack }: AuthManagerProp
     setTimeout(callback, 200)
   }
 
-  const handleLogin = (email: string, password: string) => {
-    // Simulate login API call
-    const mockUser: User = {
-      id: "1",
-      fullName: "John Fisherman",
-      email: email,
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    }
-    
-    setUser(mockUser)
+  const handleLogin = (user: User) => {
+    setCurrentUser(user)
     animateTransition(() => {
       setAuthState("authenticated")
-      onAuthenticated()
+      onAuthenticated(user)
     })
   }
 
-  const handleRegister = (userData: {
-    fullName: string
-    email: string
-    password: string
-    confirmPassword: string
-  }) => {
-    // Simulate registration API call
-    const newUser: User = {
-      id: Date.now().toString(),
-      fullName: userData.fullName,
-      email: userData.email,
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    }
-    
-    setUser(newUser)
+  const handleRegister = (user: User) => {
+    setCurrentUser(user)
     animateTransition(() => {
       setAuthState("authenticated")
-      onAuthenticated()
+      onAuthenticated(user)
     })
   }
 
   const handleLogout = () => {
-    setUser(null)
+    setCurrentUser(null)
     animateTransition(() => {
       setAuthState("login")
     })

@@ -1,8 +1,8 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { SafeAreaProvider } from "react-native-safe-area-context"
-import { StatusBar, TouchableOpacity } from "react-native"
+import { StatusBar, TouchableOpacity, View, ActivityIndicator } from "react-native"
 import MapScreen from "./screens/MapScreen"
 import LogbookScreen from "./screens/LogbookScreen"
 import WeatherScreen from "./screens/WeatherScreen"
@@ -13,12 +13,25 @@ import AuthManager from "./screens/AuthManager"
 import UserProfileScreen from "./screens/UserProfileScreen"
 import { theme } from "./theme/colors"
 import { Ionicons } from "@expo/vector-icons"
+import { authService } from "./services/auth"
+import { User } from "firebase/auth"
 
 const Tab = createBottomTabNavigator()
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [showProfile, setShowProfile] = useState(false)
+
+  useEffect(() => {
+    // Listen to authentication state changes
+    const unsubscribe = authService.onAuthStateChanged((user) => {
+      setUser(user)
+      setIsLoading(false)
+    })
+
+    return unsubscribe
+  }, [])
 
   const navTheme = {
     ...DefaultTheme,
@@ -33,17 +46,28 @@ export default function App() {
     },
   }
 
-  const handleAuthenticated = () => {
-    setIsAuthenticated(true)
+  const handleAuthenticated = (authenticatedUser: User) => {
+    setUser(authenticatedUser)
   }
 
   const handleLogout = () => {
-    setIsAuthenticated(false)
+    setUser(null)
     setShowProfile(false)
   }
 
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.bg }}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </SafeAreaProvider>
+    )
+  }
+
   // Show auth screens if not authenticated
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <SafeAreaProvider>
         <StatusBar barStyle="light-content" />
