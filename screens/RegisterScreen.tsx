@@ -20,11 +20,12 @@ import { authService } from "../services/auth"
 const { width, height } = Dimensions.get("window")
 
 interface RegisterScreenProps {
-  onRegister: (user: any) => void
+  onRegister: (user: any, phoneNumber?: string) => void
   onNavigateToLogin: () => void
+  onPhoneVerificationNeeded?: (phoneNumber: string) => void
 }
 
-export default function RegisterScreen({ onRegister, onNavigateToLogin }: RegisterScreenProps) {
+export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneVerificationNeeded }: RegisterScreenProps) {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
@@ -120,7 +121,7 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin }: Regist
         [
           {
             text: "OK",
-            onPress: () => onRegister(user)
+            onPress: () => onRegister(user, phoneNumber)
           }
         ]
       )
