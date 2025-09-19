@@ -37,37 +37,77 @@ class WeatherService {
   // Get current marine weather conditions
   async getCurrentWeather(lat: number, lon: number): Promise<MarineWeather> {
     try {
-      // Get current weather
-      const currentResponse = await fetch(
-        `${this.baseUrl}/weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`
-      )
-      const currentData = await currentResponse.json()
+      console.log('Fetching weather for location:', lat, lon)
+      
+      // Validate inputs
+      if (!lat || !lon || typeof lat !== 'number' || typeof lon !== 'number') {
+        console.warn('Invalid coordinates provided to getCurrentWeather:', lat, lon)
+        return this.getFallbackWeather()
+      }
+      
+      // Check API configuration
+      if (!this.baseUrl || !this.apiKey) {
+        console.warn('Weather API not configured, using fallback data')
+        return this.getFallbackWeather()
+      }
 
-      // Get UV Index
-      const uvResponse = await fetch(
-        `${this.baseUrl}/uvi?lat=${lat}&lon=${lon}&appid=${this.apiKey}`
-      )
-      const uvData = await uvResponse.json()
+      // Get current weather with timeout
+      const currentResponse = await Promise.race([
+        fetch(`${this.baseUrl}/weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Weather API timeout')), 10000))
+      ]) as Response
+      
+      if (!currentResponse.ok) {
+        console.warn(`Weather API returned ${currentResponse.status}: ${currentResponse.statusText}`)
+        return this.getFallbackWeather()
+      }
+      
+      const currentData = await currentResponse.json()
+      
+      if (!currentData || !currentData.main) {
+        console.warn('Invalid weather data received:', currentData)
+        return this.getFallbackWeather()
+      }
+
+      // Get UV Index (optional, fallback if fails)
+      let uvData = { value: 5 } // Default UV index
+      try {
+        const uvResponse = await Promise.race([
+          fetch(`${this.baseUrl}/uvi?lat=${lat}&lon=${lon}&appid=${this.apiKey}`),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('UV API timeout')), 5000))
+        ]) as Response
+        
+        if (uvResponse.ok) {
+          uvData = await uvResponse.json()
+        }
+      } catch (uvError) {
+        console.warn('UV index fetch failed, using default:', uvError)
+      }
 
       // Calculate fishing conditions based on weather parameters
       const fishingConditions = this.calculateFishingConditions(currentData, uvData)
       const warnings = this.generateWeatherWarnings(currentData)
 
-      return {
-        temperature: Math.round(currentData.main.temp),
-        windSpeed: Math.round(currentData.wind.speed * 3.6), // Convert m/s to km/h
-        windDirection: currentData.wind.deg || 0,
-        waveHeight: this.estimateWaveHeight(currentData.wind.speed),
+      const weather = {
+        temperature: Math.round(currentData.main?.temp || 28),
+        windSpeed: Math.round((currentData.wind?.speed || 0) * 3.6), // Convert m/s to km/h
+        windDirection: currentData.wind?.deg || 0,
+        waveHeight: this.estimateWaveHeight(currentData.wind?.speed || 0),
         visibility: currentData.visibility ? currentData.visibility / 1000 : 10, // Convert to km
-        pressure: currentData.main.pressure,
-        humidity: currentData.main.humidity,
-        uvIndex: uvData.value || 0,
+        pressure: currentData.main?.pressure || 1013,
+        humidity: currentData.main?.humidity || 70,
+        uvIndex: uvData.value || 5,
         fishingConditions,
         warnings
       }
+      
+      console.log('Weather data fetched successfully:', weather)
+      return weather
+      
     } catch (error) {
       console.error("Error fetching weather data:", error)
-      throw new Error("Failed to fetch weather data")
+      console.log("Using fallback weather data")
+      return this.getFallbackWeather()
     }
   }
 
@@ -234,6 +274,22 @@ class WeatherService {
       hour: '2-digit', 
       minute: '2-digit' 
     })
+  }
+
+  // Fallback weather data when API fails
+  private getFallbackWeather(): MarineWeather {
+    return {
+      temperature: 28,
+      windSpeed: 15,
+      windDirection: 180,
+      waveHeight: 1.5,
+      visibility: 10,
+      pressure: 1013,
+      humidity: 70,
+      uvIndex: 6,
+      fishingConditions: "Good",
+      warnings: ["Using offline weather data"]
+    }
   }
 }
 

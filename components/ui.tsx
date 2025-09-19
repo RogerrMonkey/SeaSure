@@ -1,6 +1,6 @@
-import React from "react"
-import { View, Text, TouchableOpacity, StyleSheet, type ViewStyle, type TextStyle, Animated } from "react-native"
-import { theme } from "../theme/colors"
+﻿import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { theme } from '../theme/colors';
 
 export function Card(props: { children: React.ReactNode; style?: ViewStyle }) {
   return <View style={[styles.card, props.style]}>{props.children}</View>
@@ -14,113 +14,56 @@ export function Button(props: {
   textStyle?: TextStyle
   disabled?: boolean
 }) {
-  const { variant = "primary", disabled } = props
-  const [scale] = React.useState(new Animated.Value(1))
-
-  const onPressIn = () => {
-    Animated.spring(scale, {
-      toValue: 0.95,
-      useNativeDriver: true,
-    }).start()
-  }
-
-  const onPressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start()
-  }
-
-  const base = [styles.btn, variantStyles[variant], disabled && { opacity: 0.6 }]
-  const txt = [styles.btnText, variantTextStyles[variant], props.textStyle]
-  
+  const variant = props.variant || "primary"
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
-      <TouchableOpacity
-        accessibilityRole="button"
-        onPress={props.onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        disabled={disabled}
-        style={[...base, props.style]}
-      >
-        <Text style={txt}>{props.title}</Text>
-      </TouchableOpacity>
-    </Animated.View>
+    <TouchableOpacity
+      style={[
+        styles.btn,
+        variant === "primary" && styles.btnPrimary,
+        variant === "ghost" && styles.btnGhost,
+        variant === "warn" && styles.btnWarn,
+        variant === "danger" && styles.btnDanger,
+        props.disabled && styles.btnDisabled,
+        props.style,
+      ]}
+      onPress={props.onPress}
+      disabled={props.disabled}
+      activeOpacity={0.8}
+    >
+      <Text style={[styles.btnText, variant === "primary" && styles.btnTextPrimary, variant === "ghost" && styles.btnTextGhost, props.textStyle]}>
+        {props.title}
+      </Text>
+    </TouchableOpacity>
   )
 }
 
-export function Badge(props: { label: string; tone?: "default" | "warn" | "danger" | "success" }) {
-  const tone = props.tone ?? "default"
+export function Badge(props: { text: string; variant?: "primary" | "success" | "warning" | "danger" }) {
+  const variant = props.variant || "primary"
   return (
-    <View
-      style={[
-        styles.badge,
-        tone === "warn" && { backgroundColor: theme.warn },
-        tone === "danger" && { backgroundColor: theme.danger },
-        tone === "success" && { backgroundColor: "#10b981" },
-      ]}
-    >
-      <Text style={[
-        styles.badgeText,
-        tone === "success" && { color: "#ffffff" },
-        tone === "danger" && { color: "#ffffff" },
-      ]}>{props.label}</Text>
+    <View style={[styles.badge, variant === "primary" && styles.badgePrimary, variant === "success" && styles.badgeSuccess]}>
+      <Text style={styles.badgeText}>{props.text}</Text>
     </View>
   )
 }
 
-export function SectionTitle(props: { children: React.ReactNode }) {
-  return <Text style={styles.sectionTitle}>{props.children}</Text>
+export function SectionTitle(props: { children: React.ReactNode; style?: TextStyle }) {
+  return <Text style={[styles.sectionTitle, props.style]}>{props.children}</Text>
 }
 
 const styles = StyleSheet.create({
-  card: { 
-    backgroundColor: "#FFFFFF", 
-    borderRadius: 16, 
-    padding: 16, 
-    borderColor: "#E2E8F0", 
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  btn: { 
-    paddingVertical: 14, 
-    paddingHorizontal: 20, 
-    borderRadius: 12, 
-    alignItems: "center", 
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
-  },
+  card: { backgroundColor: theme.bgCard, borderRadius: 16, padding: 20, marginBottom: 16, shadowColor: theme.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 },
+  btn: { height: 48, borderRadius: 12, paddingHorizontal: 24, alignItems: "center", justifyContent: "center", marginVertical: 8 },
+  btnPrimary: { backgroundColor: theme.primary },
+  btnGhost: { backgroundColor: "transparent", borderWidth: 1, borderColor: theme.primary },
+  btnWarn: { backgroundColor: theme.warning },
+  btnDanger: { backgroundColor: theme.danger },
+  btnDisabled: { opacity: 0.5 },
   btnText: { fontSize: 16, fontWeight: "600" },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: "#E2E8F0",
-    alignSelf: "flex-start",
-  },
-  badgeText: { color: "#0F172A", fontWeight: "600", fontSize: 12 },
-  sectionTitle: { fontSize: 20, fontWeight: "700", color: theme.fg, marginBottom: 12 },
-})
-
-const variantStyles = StyleSheet.create({
-  primary: { backgroundColor: theme.primary },
-  ghost: { backgroundColor: "#FFFFFF", borderColor: "#CBD5E1", borderWidth: 1 },
-  warn: { backgroundColor: theme.warn },
-  danger: { backgroundColor: theme.danger },
-})
-
-const variantTextStyles = StyleSheet.create({
-  primary: { color: "#FFFFFF" },
-  ghost: { color: theme.fg },
-  warn: { color: "#0F172A" },
-  danger: { color: "#FFFFFF" },
-})
+  btnTextPrimary: { color: theme.textOnPrimary },
+  btnTextGhost: { color: theme.primary },
+  badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
+  badgePrimary: { backgroundColor: theme.primary },
+  badgeSuccess: { backgroundColor: theme.success },
+  badgeText: { color: theme.textOnPrimary, fontSize: 12, fontWeight: "600" },
+  sectionTitle: { fontSize: 20, fontWeight: "600", color: theme.text, marginBottom: 16 },
+});

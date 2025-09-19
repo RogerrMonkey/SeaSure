@@ -39,7 +39,7 @@ export default function AlertsScreen() {
           <Card style={{ marginBottom: 8 }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <Text style={styles.title}>{item.title}</Text>
-              {!item.read && <Badge label="New" tone={item.severity === "danger" ? "danger" : "warn"} />}
+              {!item.read && <Badge text="New" variant={item.severity === "danger" ? "danger" : "warning"} />}
             </View>
             <Text style={styles.meta}>
               {new Date(item.timestamp).toLocaleString()} • {item.type}
