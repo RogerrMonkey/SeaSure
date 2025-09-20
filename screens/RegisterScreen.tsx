@@ -14,6 +14,7 @@ import {
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
 import { theme } from "../theme/colors"
 import { authService } from "../services/auth"
 
@@ -26,6 +27,7 @@ interface RegisterScreenProps {
 }
 
 export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneVerificationNeeded }: RegisterScreenProps) {
+  const { t } = useTranslation()
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -63,27 +65,27 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
 
   const handleRegister = async () => {
     if (!fullName || !email || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields")
+      Alert.alert(t('common.error'), t('auth.please_fill_fields'))
       return
     }
 
     if (!email.includes('@')) {
-      Alert.alert("Error", "Please enter a valid email address")
+      Alert.alert(t('common.error'), t('auth.enter_valid_email'))
       return
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match")
+      Alert.alert(t('common.error'), t('auth.passwords_no_match'))
       return
     }
 
     if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long")
+      Alert.alert(t('common.error'), t('auth.password_min_length_register'))
       return
     }
 
     if (!agreedToTerms) {
-      Alert.alert("Error", "Please agree to the Terms of Service and Privacy Policy")
+      Alert.alert(t('common.error'), t('auth.agree_terms'))
       return
     }
 
@@ -97,30 +99,30 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
       )
       
       Alert.alert(
-        "Registration Successful",
-        "Your account has been created successfully! You can now start using SeaSure.",
+        t('auth.registration_successful'),
+        t('auth.account_created_message'),
         [
           {
-            text: "OK",
+            text: t('common.ok'),
             onPress: () => onRegister(user)
           }
         ]
       )
     } catch (error: any) {
       console.error('Registration error:', error)
-      let errorMessage = "Registration failed. Please try again."
+      let errorMessage = t('auth.registration_error')
       
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "An account with this email already exists. Please try logging in instead."
+        errorMessage = t('auth.email_already_in_use')
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "Please enter a valid email address."
+        errorMessage = t('auth.invalid_email')
       } else if (error.code === 'auth/weak-password') {
-        errorMessage = "Password is too weak. Please choose a stronger password."
+        errorMessage = t('auth.weak_password')
       } else if (error.code === 'auth/network-request-failed') {
         errorMessage = "Network error. Please check your internet connection."
       }
       
-      Alert.alert("Registration Failed", errorMessage)
+      Alert.alert(t('auth.registration_failed'), errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -180,7 +182,7 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
               <View style={styles.logoContainer}>
                 <Ionicons name="person-add" size={50} color="#ffffff" />
               </View>
-              <Text style={styles.title}>Create Account</Text>
+              <Text style={styles.title}>{t('auth.create_account')}</Text>
               <Text style={styles.subtitle}>Join the SeaSure community</Text>
             </View>
 
@@ -190,7 +192,7 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
                 <Ionicons name="person-outline" size={20} color={theme.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Full Name"
+                  placeholder={t('auth.full_name')}
                   placeholderTextColor="#94a3b8"
                   value={fullName}
                   onChangeText={setFullName}
@@ -203,7 +205,7 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
                 <Ionicons name="mail-outline" size={20} color={theme.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder={t('auth.email')}
                   placeholderTextColor="#94a3b8"
                   value={email}
                   onChangeText={setEmail}
@@ -217,7 +219,7 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
                 <Ionicons name="lock-closed-outline" size={20} color={theme.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Password"
+                  placeholder={t('auth.password')}
                   placeholderTextColor="#94a3b8"
                   value={password}
                   onChangeText={setPassword}
@@ -240,7 +242,7 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
                 <Ionicons name="lock-closed-outline" size={20} color={theme.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Confirm Password"
+                  placeholder={t('auth.confirm_password')}
                   placeholderTextColor="#94a3b8"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -293,9 +295,9 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
                   )}
                 </View>
                 <Text style={styles.termsText}>
-                  I agree to the{" "}
-                  <Text style={styles.termsLink}>Terms of Service</Text> and{" "}
-                  <Text style={styles.termsLink}>Privacy Policy</Text>
+                  {t('auth.i_agree')}{" "}
+                  <Text style={styles.termsLink}>{t('auth.terms_service')}</Text>{t('auth.and')}{" "}
+                  <Text style={styles.termsLink}>{t('auth.privacy_policy')}</Text>
                 </Text>
               </TouchableOpacity>
 
@@ -314,10 +316,10 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
                   >
                     {isLoading ? (
                       <Animated.View style={styles.loadingContainer}>
-                        <Text style={styles.registerButtonText}>Creating Account...</Text>
+                        <Text style={styles.registerButtonText}>{t('auth.creating_account')}</Text>
                       </Animated.View>
                     ) : (
-                      <Text style={styles.registerButtonText}>Create Account</Text>
+                      <Text style={styles.registerButtonText}>{t('auth.create_account')}</Text>
                     )}
                   </LinearGradient>
                 </TouchableOpacity>
@@ -326,9 +328,9 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
 
             {/* Footer */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
+              <Text style={styles.footerText}>{t('auth.have_account')} </Text>
               <TouchableOpacity onPress={onNavigateToLogin}>
-                <Text style={styles.footerLink}>Sign In</Text>
+                <Text style={styles.footerLink}>{t('auth.sign_in')}</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>

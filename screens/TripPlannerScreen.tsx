@@ -27,6 +27,7 @@ import {
   LoadingOverlay, 
   StatsCard 
 } from "../components/modernUI"
+import SOSButton from "../components/SOSButton"
 
 const { width, height } = Dimensions.get('window')
 
@@ -774,6 +775,16 @@ export default function TripPlannerScreen() {
 
       {/* Loading Overlay */}
       {loading && <LoadingOverlay visible={true} message="Generating smart trip plan..." />}
+      
+      {/* SOS Emergency Button */}
+      <SOSButton
+        onLocationRetrieved={(location) => {
+          console.log('📍 Trip Planner - Emergency location retrieved:', location);
+        }}
+        onEmergencyTriggered={(location) => {
+          console.log('🚨 Trip Planner - Emergency triggered at:', location);
+        }}
+      />
     </Animated.View>
   )
 }

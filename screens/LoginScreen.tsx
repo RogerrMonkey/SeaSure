@@ -14,6 +14,7 @@ import {
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
 import { theme } from "../theme/colors"
 import { authService } from "../services/auth"
 
@@ -27,6 +28,7 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPassword, onPhoneVerificationNeeded }: LoginScreenProps) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -60,17 +62,17 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields")
+      Alert.alert(t('common.error'), t('auth.please_fill_fields'))
       return
     }
 
     if (!email.includes('@')) {
-      Alert.alert("Error", "Please enter a valid email address")
+      Alert.alert(t('common.error'), t('auth.enter_valid_email'))
       return
     }
 
     if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters")
+      Alert.alert(t('common.error'), t('auth.password_min_length'))
       return
     }
 
@@ -78,23 +80,23 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
     
     try {
       const user = await authService.signInWithEmail(email, password)
-      Alert.alert("Success", "Login successful!")
+      Alert.alert(t('common.success'), t('auth.login_successful'))
       onLogin(user)
     } catch (error: any) {
       console.error('Login error:', error)
-      let errorMessage = "Login failed. Please try again."
+      let errorMessage = t('auth.login_error')
       
       if (error.code === 'auth/user-not-found') {
-        errorMessage = "No account found with this email address."
+        errorMessage = t('auth.user_not_found')
       } else if (error.code === 'auth/wrong-password') {
-        errorMessage = "Incorrect password. Please try again."
+        errorMessage = t('auth.wrong_password')
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "Please enter a valid email address."
+        errorMessage = t('auth.invalid_email')
       } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = "Too many failed attempts. Please try again later."
+        errorMessage = t('auth.too_many_requests')
       }
       
-      Alert.alert("Login Failed", errorMessage)
+      Alert.alert(t('auth.login_failed'), errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -147,8 +149,8 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
               <View style={styles.logoContainer}>
                 <Ionicons name="boat" size={60} color="#ffffff" />
               </View>
-              <Text style={styles.title}>SeaSure</Text>
-              <Text style={styles.subtitle}>Your Coastal Fishing Companion</Text>
+              <Text style={styles.title}>{t('auth.app_title')}</Text>
+              <Text style={styles.subtitle}>{t('auth.app_subtitle')}</Text>
             </View>
 
             {/* Login Form */}
@@ -157,7 +159,7 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
                 <Ionicons name="mail-outline" size={20} color={theme.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder={t('auth.email')}
                   placeholderTextColor="#94a3b8"
                   value={email}
                   onChangeText={setEmail}
@@ -171,7 +173,7 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
                 <Ionicons name="lock-closed-outline" size={20} color={theme.primary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Password"
+                  placeholder={t('auth.password')}
                   placeholderTextColor="#94a3b8"
                   value={password}
                   onChangeText={setPassword}
@@ -191,7 +193,7 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
               </View>
 
               <TouchableOpacity onPress={onForgotPassword} style={styles.forgotPassword}>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                <Text style={styles.forgotPasswordText}>{t('auth.forgot_password')}</Text>
               </TouchableOpacity>
 
               <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
@@ -209,10 +211,10 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
                   >
                     {isLoading ? (
                       <Animated.View style={styles.loadingContainer}>
-                        <Text style={styles.loginButtonText}>Signing In...</Text>
+                        <Text style={styles.loginButtonText}>{t('auth.signing_in')}</Text>
                       </Animated.View>
                     ) : (
-                      <Text style={styles.loginButtonText}>Sign In</Text>
+                      <Text style={styles.loginButtonText}>{t('auth.sign_in')}</Text>
                     )}
                   </LinearGradient>
                 </TouchableOpacity>
@@ -221,9 +223,9 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
 
             {/* Footer */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
+              <Text style={styles.footerText}>{t('auth.no_account')} </Text>
               <TouchableOpacity onPress={onNavigateToRegister}>
-                <Text style={styles.footerLink}>Sign Up</Text>
+                <Text style={styles.footerLink}>{t('auth.signup')}</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>

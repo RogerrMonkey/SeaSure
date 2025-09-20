@@ -11,6 +11,8 @@ import AlertsScreen from "./screens/AlertsScreen"
 import SettingsScreen from "./screens/SettingsScreen"
 import AuthManager from "./screens/AuthManager"
 import UserProfileScreen from "./screens/UserProfileScreen"
+import DemoJudgesPanel from "./components/DemoJudgesPanel"
+import AppInitializer from "./utils/AppInitializer"
 import { theme } from "./theme/colors"
 import { Ionicons } from "@expo/vector-icons"
 import { authService } from "./services/auth"
@@ -32,6 +34,9 @@ export default function App() {
       setUser(user)
       setIsLoading(false)
     })
+
+    // Initialize app services
+    AppInitializer.initialize().catch(console.error)
 
     return unsubscribe
   }, [])
@@ -105,7 +110,30 @@ export default function App() {
             headerShown: true,
             tabBarActiveTintColor: theme.primary,
             tabBarInactiveTintColor: "#64748B",
-            tabBarStyle: { backgroundColor: "#FFFFFF" },
+            tabBarStyle: { 
+              backgroundColor: "#FFFFFF",
+              height: 90, // Increased height
+              paddingBottom: 10,
+              paddingTop: 10,
+              borderTopWidth: 1,
+              borderTopColor: "#E2E8F0",
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: -2,
+              },
+              shadowOpacity: 0.1,
+              shadowRadius: 3,
+              elevation: 8,
+            },
+            tabBarLabelStyle: {
+              fontSize: 11,
+              fontWeight: '600',
+              marginTop: 4,
+            },
+            tabBarIconStyle: {
+              marginTop: 4,
+            },
             // Add profile button to header
             headerRight: () => (
               <TouchableOpacity
@@ -116,13 +144,16 @@ export default function App() {
               </TouchableOpacity>
             ),
             tabBarIcon: ({ color, size }) => {
+              const iconSize = 26; // Larger icons
               const map: Record<string, React.ReactNode> = {
-                Map: <Ionicons name="map" size={size} color={color} />,
-                Logbook: <Ionicons name="list" size={size} color={color} />,
-                Weather: <Ionicons name="cloud" size={size} color={color} />,
-                Trip: <Ionicons name="navigate" size={size} color={color} />,
-                Alerts: <Ionicons name="alert-circle" size={size} color={color} />,
-                Settings: <Ionicons name="settings" size={size} color={color} />,
+                Map: <Ionicons name="map" size={iconSize} color={color} />,
+                Logbook: <Ionicons name="list" size={iconSize} color={color} />,
+                Weather: <Ionicons name="cloud" size={iconSize} color={color} />,
+                Trip: <Ionicons name="navigate" size={iconSize} color={color} />,
+                Alerts: <Ionicons name="alert-circle" size={iconSize} color={color} />,
+                Fish: <Ionicons name="fish" size={iconSize} color={color} />,
+                Demo: <Ionicons name="play-circle" size={iconSize} color={color} />,
+                Settings: <Ionicons name="settings" size={iconSize} color={color} />,
               }
               return (map[route.name] as any) ?? null
             },
@@ -155,6 +186,11 @@ export default function App() {
             name="Alerts" 
             component={AlertsScreen} 
             options={{ title: t('navigation.alerts') }} 
+          />
+          <Tab.Screen 
+            name="Demo" 
+            component={DemoJudgesPanel} 
+            options={{ title: t('navigation.demo') }} 
           />
           <Tab.Screen 
             name="Settings" 

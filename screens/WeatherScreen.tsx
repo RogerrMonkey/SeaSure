@@ -18,6 +18,7 @@ import { theme } from "../theme/colors"
 import { Ionicons } from "@expo/vector-icons"
 import * as Location from "expo-location"
 import { weatherService, type MarineWeather } from "../services/weather"
+import { useTranslation } from 'react-i18next'
 
 const { width, height } = Dimensions.get('window')
 
@@ -81,6 +82,7 @@ const weatherDesign = {
 }
 
 export default function WeatherScreen({ onBack }: WeatherScreenProps) {
+  const { t } = useTranslation()
   const [weather, setWeather] = useState<MarineWeather | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
@@ -125,19 +127,19 @@ export default function WeatherScreen({ onBack }: WeatherScreenProps) {
     
     if (weather.fishingConditions === "Dangerous") {
       Alert.alert(
-        "⚠️ Dangerous Conditions",
-        "Current weather is dangerous for fishing. Please wait for conditions to improve.",
-        [{ text: "OK" }]
+        `⚠️ ${t('weather.dangerous')} ${t('weather.fishing_conditions')}`,
+        t('alerts.severe_weather'),
+        [{ text: t('common.ok') }]
       )
       return
     }
     
     Alert.alert(
-      "🎣 Quick Trip Planning",
-      `Weather conditions are ${weather.fishingConditions.toLowerCase()}. Plan a fishing trip now?`,
+      `🎣 ${t('trip_planner.smart_route')}`,
+      `${t('weather.fishing_conditions')} ${t('common.are')} ${weather.fishingConditions.toLowerCase()}. ${t('common.plan_trip')} ${t('common.now')}?`,
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Plan Trip", onPress: () => {
+        { text: t('common.cancel'), style: "cancel" },
+        { text: t('common.plan_trip'), onPress: () => {
           console.log("Navigate to trip planner with weather data")
           // Navigate to trip planner screen
         }}
@@ -220,10 +222,10 @@ export default function WeatherScreen({ onBack }: WeatherScreenProps) {
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
         <View style={styles.centerContent}>
           <Ionicons name="warning" size={64} color={theme.warn} />
-          <Text style={styles.errorTitle}>Unable to Load Weather</Text>
+          <Text style={styles.errorTitle}>{t('weather.unable_to_load')}</Text>
           <Text style={styles.errorText}>{error}</Text>
           <ModernButton
-            title="Retry"
+            title={t('common.retry')}
             icon="refresh"
             onPress={fetchWeatherData}
             style={styles.retryButton}
@@ -249,8 +251,8 @@ export default function WeatherScreen({ onBack }: WeatherScreenProps) {
               </TouchableOpacity>
             )}
             <View style={styles.navTitleContainer}>
-              <Text style={styles.navTitle}>Marine Weather</Text>
-              <Text style={styles.navSubtitle}>Real-time fishing conditions</Text>
+              <Text style={styles.navTitle}>{t('weather.title')}</Text>
+              <Text style={styles.navSubtitle}>{t('weather.real_time_conditions')}</Text>
             </View>
             
             {weather && (
@@ -381,8 +383,8 @@ export default function WeatherScreen({ onBack }: WeatherScreenProps) {
                 </LinearGradient>
                 <Text style={styles.metricValue}>{weather.windSpeed}</Text>
                 <Text style={styles.metricUnit}>km/h</Text>
-                <Text style={styles.metricLabel}>Wind Speed</Text>
-                <Text style={styles.metricSubtext}>{weather.windDirection}° direction</Text>
+                <Text style={styles.metricLabel}>{t('weather.wind_speed')}</Text>
+                <Text style={styles.metricSubtext}>{weather.windDirection}° {t('weather.wind_direction')}</Text>
               </View>
 
               <View style={styles.metricCard}>
@@ -394,7 +396,7 @@ export default function WeatherScreen({ onBack }: WeatherScreenProps) {
                 </LinearGradient>
                 <Text style={styles.metricValue}>{weather.waveHeight}</Text>
                 <Text style={styles.metricUnit}>m</Text>
-                <Text style={styles.metricLabel}>Wave Height</Text>
+                <Text style={styles.metricLabel}>{t('weather.wave_height')}</Text>
               </View>
 
               <View style={styles.metricCard}>
@@ -406,7 +408,7 @@ export default function WeatherScreen({ onBack }: WeatherScreenProps) {
                 </LinearGradient>
                 <Text style={styles.metricValue}>{weather.visibility}</Text>
                 <Text style={styles.metricUnit}>km</Text>
-                <Text style={styles.metricLabel}>Visibility</Text>
+                <Text style={styles.metricLabel}>{t('weather.visibility')}</Text>
               </View>
 
               <View style={styles.metricCard}>

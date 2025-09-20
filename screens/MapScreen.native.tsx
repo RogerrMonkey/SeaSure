@@ -12,6 +12,7 @@ import {
   Switch
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
 import * as Location from "expo-location"
 import MapView, { Marker, Polygon, Polyline, UrlTile } from "react-native-maps"
 
@@ -22,6 +23,7 @@ import {
   ProfessionalBadge, 
   LoadingOverlay 
 } from "../components/modernUI"
+import SOSButton from "../components/SOSButton"
 
 const { width, height } = Dimensions.get('window')
 
@@ -199,6 +201,7 @@ interface LayerToggleState {
 }
 
 export default function MapScreen() {
+  const { t } = useTranslation()
   const [position, setPosition] = useState<Position | null>(null)
   const [pfzSectorsData, setPfzSectorsData] = useState<INCOISFeature[]>([])
   const [pfzLinesData, setPfzLinesData] = useState<INCOISFeature[]>([])
@@ -246,7 +249,7 @@ export default function MapScreen() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync()
       if (status !== "granted") {
-        Alert.alert("Permission Required", "Location permission is required for navigation.")
+        Alert.alert(t('map.permission_required'), t('map.location_permission_nav'))
         return
       }
 
@@ -272,7 +275,7 @@ export default function MapScreen() {
       }
     } catch (error) {
       console.error('Error getting location:', error)
-      Alert.alert("Location Error", "Unable to get current location. Using default region.")
+      Alert.alert(t('map.location_error'), t('map.location_error_message'))
     } finally {
       setLoading(false)
     }
@@ -687,7 +690,7 @@ export default function MapScreen() {
 
     } catch (error) {
       console.error('Error loading WFS data:', error)
-      Alert.alert("Data Loading Error", "Using offline data. Please check your internet connection for latest updates.")
+      Alert.alert(t('map.data_loading_error'), t('map.offline_data_message'))
     } finally {
       setDataLoaded(true) // Mark as completed even if some endpoints failed
       setLoading(false)
@@ -719,7 +722,7 @@ export default function MapScreen() {
 
   const findNearestLandingCentre = () => {
     if (!position || landingCentresData.length === 0) {
-      Alert.alert("Info", "Current location or landing centres data not available.")
+      Alert.alert(t('map.info'), t('map.location_data_unavailable'))
       return
     }
 
@@ -771,7 +774,7 @@ export default function MapScreen() {
 
   const checkPFZViolation = () => {
     if (!position) {
-      Alert.alert("Info", "Current location not available.")
+      Alert.alert(t('map.info'), t('map.current_location_unavailable'))
       return
     }
 
@@ -793,10 +796,10 @@ export default function MapScreen() {
       Alert.alert(
         "PFZ Alert",
         `You are currently in ${pfzName}. Please check fishing regulations.`,
-        [{ text: "OK" }]
+        [{ text: t('common.ok') }]
       )
     } else {
-      Alert.alert("PFZ Status", "You are not currently in any PFZ sector.", [{ text: "OK" }])
+      Alert.alert(t('map.pfz_status'), t('map.not_in_pfz'), [{ text: t('common.ok') }])
     }
   }
 
@@ -1245,6 +1248,17 @@ export default function MapScreen() {
 
         {/* Loading Overlay */}
         {loading && <LoadingOverlay visible={loading} message="Loading map data..." />}
+        
+        {/* SOS Emergency Button */}
+        <SOSButton
+          onLocationRetrieved={(location) => {
+            console.log('📍 Emergency location retrieved:', location);
+          }}
+          onEmergencyTriggered={(location) => {
+            console.log('🚨 Emergency triggered at:', location);
+            // You can add additional emergency actions here
+          }}
+        />
       </Animated.View>
     </View>
   )

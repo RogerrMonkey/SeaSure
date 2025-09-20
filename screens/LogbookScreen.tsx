@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { authService } from '../services/auth'
-import { theme } from '../theme/colors'
+import { theme, palette } from '../theme/colors'
 import { 
   EnhancedCard, 
   ModernButton, 
@@ -27,6 +27,8 @@ import {
   LoadingOverlay 
 } from '../components/modernUI'
 import { useTranslation } from 'react-i18next'
+import FishCamera from '../components/FishCamera'
+import { FishIdentificationResult } from '../services/fishRecognition'
 
 const { width, height } = Dimensions.get('window')
 
@@ -89,6 +91,8 @@ const LogbookScreen: React.FC<LogbookScreenProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(false)
   const [showSpeciesModal, setShowSpeciesModal] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [showFishCamera, setShowFishCamera] = useState(false)
+  const [detectedFishData, setDetectedFishData] = useState<FishIdentificationResult | null>(null)
   
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current
@@ -312,6 +316,57 @@ const LogbookScreen: React.FC<LogbookScreenProps> = ({ navigation }) => {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Fish camera handlers
+  const handleFishDetected = (species: string, confidence: number, details?: FishIdentificationResult) => {
+    console.log('🐟 Fish detected:', species, 'confidence:', confidence)
+    
+    // Try to find matching fish in our local species list
+    const matchedFish = FISH_SPECIES.find(fish => 
+      fish.name.toLowerCase().includes(species.toLowerCase()) ||
+      species.toLowerCase().includes(fish.name.toLowerCase())
+    )
+    
+    if (matchedFish) {
+      setSelectedFish(matchedFish)
+      console.log('✅ Matched local fish:', matchedFish.name)
+    } else {
+      // Create a new fish entry for detected species
+      const detectedFishEntry = {
+        id: species.toLowerCase().replace(/\s+/g, '_'),
+        name: species,
+        category: 'Detected',
+        emoji: '🐟'
+      }
+      setSelectedFish(detectedFishEntry)
+      console.log('🆕 Using detected fish:', species)
+    }
+    
+    // Store detailed detection data for reference
+    if (details) {
+      setDetectedFishData(details)
+    }
+    
+    // Close camera modal
+    setShowFishCamera(false)
+    
+    // Show success message with confidence
+    Alert.alert(
+      '🎯 Fish Identified!',
+      `${species} detected with ${Math.round(confidence * 100)}% confidence.\n\nYou can now add weight and quantity to complete your catch entry.`,
+      [{ text: 'Great!', style: 'default' }]
+    )
+  }
+
+  const handleCameraCancel = () => {
+    setShowFishCamera(false)
+    // Optionally fall back to manual selection
+    setShowSpeciesModal(true)
+  }
+
+  const openFishCamera = () => {
+    setShowFishCamera(true)
   }
 
   const incrementQuantity = () => setQuantity(prev => Math.min(prev + 1, 999))
@@ -580,6 +635,31 @@ const LogbookScreen: React.FC<LogbookScreenProps> = ({ navigation }) => {
           {/* Fish Species Selection */}
           <EnhancedCard style={styles.card}>
             <Text style={styles.sectionTitle}>🐟 {t('logbook.fish_species')}</Text>
+            
+            {/* AI Camera Detection Button */}
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={openFishCamera}
+            >
+              <View style={styles.cameraContent}>
+                <View style={styles.cameraIcon}>
+                  <Ionicons name="camera" size={24} color="#ffffff" />
+                </View>
+                <View style={styles.cameraText}>
+                  <Text style={styles.cameraTitle}>📸 AI Fish Detection</Text>
+                  <Text style={styles.cameraSubtitle}>Take a photo to identify species automatically</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={20} color={theme.primary} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Manual Selection */}
             <TouchableOpacity
               style={styles.speciesSelector}
               onPress={() => setShowSpeciesModal(true)}
@@ -587,13 +667,21 @@ const LogbookScreen: React.FC<LogbookScreenProps> = ({ navigation }) => {
               {selectedFish ? (
                 <View style={styles.selectedSpecies}>
                   <Text style={styles.selectedEmoji}>{selectedFish.emoji}</Text>
-                  <View>
+                  <View style={styles.selectedInfo}>
                     <Text style={styles.selectedName}>{selectedFish.name}</Text>
                     <Text style={styles.selectedCategory}>{selectedFish.category}</Text>
+                    {detectedFishData && (
+                      <View style={styles.aiDetectedBadge}>
+                        <Ionicons name="camera" size={12} color={theme.success} />
+                        <Text style={styles.aiDetectedText}>
+                          AI Detected ({Math.round(detectedFishData.confidence * 100)}%)
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               ) : (
-                                  <Text style={styles.placeholderText}>{t('logbook.select_species')}</Text>
+                <Text style={styles.placeholderText}>{t('logbook.select_species_manual')}</Text>
               )}
               <Ionicons name="chevron-down" size={20} color={theme.textMuted} />
             </TouchableOpacity>
@@ -658,6 +746,13 @@ const LogbookScreen: React.FC<LogbookScreenProps> = ({ navigation }) => {
       {/* Modals */}
       {renderSpeciesModal()}
       {renderHistoryModal()}
+      
+      {/* Fish Camera */}
+      <FishCamera
+        visible={showFishCamera}
+        onSpeciesDetected={handleFishDetected}
+        onCancel={handleCameraCancel}
+      />
       
     </Animated.View>
   )
@@ -1170,6 +1265,79 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 10,
+  },
+  // Fish Camera Styles
+  cameraButton: {
+    backgroundColor: theme.primary,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  cameraContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  cameraIcon: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    padding: 12,
+  },
+  cameraText: {
+    flex: 1,
+  },
+  cameraTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 2,
+  },
+  cameraSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    lineHeight: 18,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.border,
+  },
+  dividerText: {
+    fontSize: 12,
+    color: theme.textMuted,
+    fontWeight: '600',
+    marginHorizontal: 16,
+    textTransform: 'uppercase',
+  },
+  selectedInfo: {
+    flex: 1,
+  },
+  aiDetectedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: palette.successLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  aiDetectedText: {
+    fontSize: 11,
+    color: theme.success,
+    fontWeight: '600',
+    marginLeft: 4,
   },
 })
 
