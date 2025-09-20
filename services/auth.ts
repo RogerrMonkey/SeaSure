@@ -48,8 +48,8 @@ export interface UserProfile {
     specialization: string[];
     preferredZones: string[];
   };
-  createdAt: any;
-  updatedAt: any;
+  createdAt?: any;
+  updatedAt?: any;
 }
 
 class AuthService {
@@ -57,28 +57,35 @@ class AuthService {
   async registerWithEmail(
     email: string,
     password: string,
-    displayName: string,
-    additionalData?: Partial<UserProfile>
+    displayName: string
   ): Promise<User> {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Update user profile
+      // Update the user's display name
       await updateProfile(user, { displayName });
 
-      // Create user document in Firestore
+      // Create user profile in Firestore
       const userProfile: UserProfile = {
         uid: user.uid,
         email: user.email || '',
-        displayName,
+        displayName: displayName,
+        photoURL: user.photoURL || '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        ...additionalData,
+        location: {
+          state: '',
+          port: ''
+        },
+        experience: {
+          yearsOfFishing: 0,
+          specialization: [],
+          preferredZones: []
+        }
       };
 
       await setDoc(doc(db, 'users', user.uid), userProfile);
-
       return user;
     } catch (error) {
       console.error('Registration error:', error);
@@ -89,7 +96,34 @@ class AuthService {
   // Sign in with Google
   async signInWithGoogle(): Promise<User> {
     try {
-      // Configure Google OAuth request
+      // Create a timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Google sign-in timeout - please try again'));
+        }, 30000); // 30 second timeout
+      });
+
+      // Create the actual sign-in promise
+      const signInPromise = this.performGoogleSignIn();
+
+      // Race between sign-in and timeout
+      const user = await Promise.race([signInPromise, timeoutPromise]);
+      return user;
+    } catch (error: any) {
+      console.error('Google Sign-In error:', error);
+      
+      if (error.message?.includes('timeout')) {
+        throw new Error('Google sign-in timed out. Please check your internet connection and try again.');
+      } else if (error.message?.includes('network')) {
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
+      throw error;
+    }
+  }
+
+  private async performGoogleSignIn(): Promise<User> {
+    try {
       const redirectUri = AuthSession.makeRedirectUri({
         scheme: 'seasure',
       });
@@ -102,13 +136,11 @@ class AuthService {
         extraParams: {},
       });
 
-      // Start the authentication flow
       const result = await request.promptAsync({
         authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
       });
 
       if (result.type === 'success') {
-        // Exchange authorization code for access token
         const tokenResult = await AuthSession.exchangeCodeAsync(
           {
             clientId: GOOGLE_OAUTH_CLIENT_ID,
@@ -124,12 +156,10 @@ class AuthService {
         );
 
         if (tokenResult.accessToken) {
-          // Create Firebase credential and sign in
           const credential = GoogleAuthProvider.credential(tokenResult.idToken, tokenResult.accessToken);
           const userCredential = await signInWithCredential(auth, credential);
           const user = userCredential.user;
 
-          // Check if user profile exists, if not create one
           const existingProfile = await this.getUserProfile(user.uid);
           if (!existingProfile) {
             const userProfile: UserProfile = {
@@ -166,13 +196,41 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password
+  // Sign in with email and password with timeout
   async signInWithEmail(email: string, password: string): Promise<User> {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Create a timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Login timeout - please check your internet connection and try again'));
+        }, 15000); // 15 second timeout
+      });
+
+      // Race between login and timeout
+      const userCredential = await Promise.race([
+        signInWithEmailAndPassword(auth, email, password),
+        timeoutPromise
+      ]);
+
       return userCredential.user;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign in error:', error);
+      
+      // Handle common Firebase auth errors with better messages
+      if (error.message?.includes('timeout')) {
+        throw new Error('Connection timeout. Please check your internet and try again.');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your internet connection.');
+      } else if (error.code === 'auth/too-many-requests') {
+        throw new Error('Too many failed attempts. Please wait a few minutes and try again.');
+      } else if (error.code === 'auth/user-not-found') {
+        throw new Error('No account found with this email address.');
+      } else if (error.code === 'auth/wrong-password') {
+        throw new Error('Incorrect password. Please try again.');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Please enter a valid email address.');
+      }
+      
       throw error;
     }
   }
@@ -206,16 +264,16 @@ class AuthService {
       }
       return null;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      throw error;
+      console.error('Error getting user profile:', error);
+      return null;
     }
   }
 
-  // Update user profile in Firestore
-  async updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
+  // Update user profile
+  async updateUserProfile(uid: string, updates: Partial<UserProfile>): Promise<void> {
     try {
       await updateDoc(doc(db, 'users', uid), {
-        ...data,
+        ...updates,
         updatedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -224,33 +282,64 @@ class AuthService {
     }
   }
 
+  // Update user location
+  async updateUserLocation(uid: string, location: UserProfile['location']): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'users', uid), {
+        location,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error updating user location:', error);
+      throw error;
+    }
+  }
+
+  // Update user boat details
+  async updateUserBoatDetails(uid: string, boatDetails: UserProfile['boatDetails']): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'users', uid), {
+        boatDetails,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error updating user boat details:', error);
+      throw error;
+    }
+  }
+
+  // Update user experience
+  async updateUserExperience(uid: string, experience: UserProfile['experience']): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'users', uid), {
+        experience,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error updating user experience:', error);
+      throw error;
+    }
+  }
+
   // Update profile picture
   async updateProfilePicture(uid: string, photoURL: string): Promise<void> {
     try {
       // Update Firebase Auth profile
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { photoURL });
+      const user = auth.currentUser;
+      if (user) {
+        await updateProfile(user, { photoURL });
       }
 
-      // Update Firestore document
-      await this.updateUserProfile(uid, { photoURL });
+      // Update Firestore profile
+      await updateDoc(doc(db, 'users', uid), {
+        photoURL,
+        updatedAt: serverTimestamp(),
+      });
     } catch (error) {
       console.error('Error updating profile picture:', error);
       throw error;
     }
   }
-
-  // Check if email exists
-  async checkEmailExists(email: string): Promise<boolean> {
-    try {
-      // This is a workaround since Firebase doesn't have a direct method
-      // We'll try to create a user and catch the error
-      return false; // For now, implement based on your needs
-    } catch (error) {
-      return false;
-    }
-  }
 }
 
 export const authService = new AuthService();
-export default authService;

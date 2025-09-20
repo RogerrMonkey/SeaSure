@@ -21,6 +21,10 @@ import { weatherService, type MarineWeather } from "../services/weather"
 
 const { width, height } = Dimensions.get('window')
 
+interface WeatherScreenProps {
+  onBack?: () => void
+}
+
 // Enhanced design system for Weather Screen
 const weatherDesign = {
   spacing: {
@@ -76,7 +80,7 @@ const weatherDesign = {
   }
 }
 
-export default function WeatherScreen() {
+export default function WeatherScreen({ onBack }: WeatherScreenProps) {
   const [weather, setWeather] = useState<MarineWeather | null>(null)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
@@ -232,6 +236,43 @@ export default function WeatherScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        
+        {/* Enhanced Navigation Header */}
+        <LinearGradient
+          colors={[theme.primary, "#0891b2", "#06b6d4"]}
+          style={styles.navHeader}
+        >
+          <View style={styles.navContainer}>
+            {onBack && (
+              <TouchableOpacity onPress={onBack} style={styles.navBackButton}>
+                <Ionicons name="arrow-back" size={28} color="#ffffff" />
+              </TouchableOpacity>
+            )}
+            <View style={styles.navTitleContainer}>
+              <Text style={styles.navTitle}>Marine Weather</Text>
+              <Text style={styles.navSubtitle}>Real-time fishing conditions</Text>
+            </View>
+            
+            {weather && (
+              <TouchableOpacity 
+                style={styles.navActionButton}
+                onPress={() => setShowQuickActions(!showQuickActions)}
+              >
+                <Ionicons name="ellipsis-vertical" size={28} color="#ffffff" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {position && (
+            <View style={styles.navLocationContainer}>
+              <Ionicons name="location" size={16} color="rgba(255, 255, 255, 0.8)" />
+              <Text style={styles.navLocationText}>
+                {position.lat.toFixed(4)}°N, {position.lon.toFixed(4)}°E
+              </Text>
+            </View>
+          )}
+        </LinearGradient>
+
         <ScrollView 
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -244,22 +285,6 @@ export default function WeatherScreen() {
         }
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header Section */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.headerTitle}>Marine Weather</Text>
-            <Text style={styles.headerSubtitle}>Real-time fishing conditions</Text>
-          </View>
-          
-          {weather && (
-            <TouchableOpacity 
-              style={styles.headerAction}
-              onPress={() => setShowQuickActions(!showQuickActions)}
-            >
-              <Ionicons name="ellipsis-vertical" size={24} color={theme.primary} />
-            </TouchableOpacity>
-          )}
-        </View>
 
         {/* Quick Actions */}
         {showQuickActions && weather && (
@@ -279,35 +304,8 @@ export default function WeatherScreen() {
           </Animated.View>
         )}
         
-        {position && (
-          <View style={styles.locationContainer}>
-            <Ionicons name="location" size={16} color={theme.primary} />
-            <Text style={styles.locationText}>
-              {position.lat.toFixed(4)}°N, {position.lon.toFixed(4)}°E
-            </Text>
-          </View>
-        )}
-
         {weather ? (
           <>
-            {/* Modern Weather Header with Gradient */}
-            <LinearGradient
-              colors={[weatherDesign.colors.primary, weatherDesign.colors.primaryLight]}
-              style={styles.header}
-            >
-              <Text style={styles.headerTitle}>Marine Weather</Text>
-              <Text style={styles.headerSubtitle}>Real-time fishing conditions</Text>
-              
-              {position && (
-                <View style={styles.locationContainer}>
-                  <Ionicons name="location" size={16} color="rgba(255, 255, 255, 0.9)" />
-                  <Text style={styles.locationText}>
-                    {position.lat.toFixed(4)}°N, {position.lon.toFixed(4)}°E
-                  </Text>
-                </View>
-              )}
-            </LinearGradient>
-
             {/* Hero Weather Card */}
             <View style={styles.heroWeatherCard}>
               <LinearGradient
@@ -325,6 +323,50 @@ export default function WeatherScreen() {
                 <View style={styles.conditionBadge}>
                   <Text style={styles.conditionText}>{weather.fishingConditions}</Text>
                 </View>
+              </LinearGradient>
+            </View>
+
+            {/* Bold Fishing Decision Card */}
+            <View style={styles.fishingDecisionCard}>
+              <LinearGradient
+                colors={
+                  weather.fishingConditions === "Excellent" || weather.fishingConditions === "Good" 
+                    ? ['#10B981', '#059669'] 
+                    : weather.fishingConditions === "Fair" 
+                    ? ['#F59E0B', '#D97706'] 
+                    : ['#EF4444', '#DC2626']
+                }
+                style={styles.fishingDecisionGradient}
+              >
+                <Ionicons 
+                  name={
+                    weather.fishingConditions === "Excellent" || weather.fishingConditions === "Good" 
+                      ? "checkmark-circle" 
+                      : weather.fishingConditions === "Fair" 
+                      ? "warning" 
+                      : "close-circle"
+                  } 
+                  size={32} 
+                  color="#FFFFFF" 
+                />
+                <Text style={styles.fishingDecisionTitle}>
+                  {weather.fishingConditions === "Excellent" || weather.fishingConditions === "Good" 
+                    ? "🎣 GO FISHING!" 
+                    : weather.fishingConditions === "Fair" 
+                    ? "⚖️ PROCEED WITH CAUTION" 
+                    : "🚨 DO NOT GO FISHING!"}
+                </Text>
+                <Text style={styles.fishingDecisionSubtitle}>
+                  {weather.fishingConditions === "Excellent" 
+                    ? "Perfect conditions - All fishing activities recommended"
+                    : weather.fishingConditions === "Good" 
+                    ? "Good conditions - Standard safety precautions"
+                    : weather.fishingConditions === "Fair" 
+                    ? "Moderate conditions - Experienced anglers only"
+                    : weather.fishingConditions === "Poor"
+                    ? "Challenging conditions - Stay close to shore"
+                    : "Dangerous conditions - Return to shore immediately"}
+                </Text>
               </LinearGradient>
             </View>
 
@@ -417,7 +459,7 @@ export default function WeatherScreen() {
               </View>
             )}
 
-            {/* AI Fishing Recommendations */}
+            {/* Enhanced AI Fishing Recommendations */}
             <View style={styles.recommendationsCard}>
               <View style={styles.recommendationHeader}>
                 <LinearGradient
@@ -426,14 +468,147 @@ export default function WeatherScreen() {
                 >
                   <Ionicons name="fish" size={20} color="#FFFFFF" />
                 </LinearGradient>
-                <Text style={styles.recommendationsTitle}>Fishing Insights</Text>
+                <Text style={styles.recommendationsTitle}>Smart Fishing Insights</Text>
               </View>
-              <Text style={styles.recommendationsText}>
-                {weather.fishingConditions === "Excellent" && "🎣 Perfect conditions for deep sea fishing! Calm waters and excellent visibility make this ideal for all fishing techniques."}
-                {weather.fishingConditions === "Good" && "🌊 Good fishing conditions detected. Standard safety precautions recommended for offshore activities."}
-                {weather.fishingConditions === "Poor" && "⚠️ Challenging conditions ahead. Consider staying closer to shore or postponing until conditions improve."}
-                {weather.fishingConditions === "Dangerous" && "🚨 Dangerous conditions! Return to shore immediately and avoid all fishing activities until weather improves."}
-              </Text>
+              
+              {/* Primary Recommendation */}
+              <View style={styles.primaryRecommendation}>
+                <Text style={styles.conditionBadgeText}>
+                  {weather.fishingConditions === "Excellent" && "🎣 PERFECT CONDITIONS"}
+                  {weather.fishingConditions === "Good" && "🌊 GOOD CONDITIONS"}
+                  {weather.fishingConditions === "Fair" && "⚖️ FAIR CONDITIONS"}
+                  {weather.fishingConditions === "Poor" && "⚠️ CHALLENGING CONDITIONS"}
+                  {weather.fishingConditions === "Dangerous" && "🚨 DANGEROUS CONDITIONS"}
+                </Text>
+                
+                <Text style={styles.primaryRecommendationText}>
+                  {weather.fishingConditions === "Excellent" && 
+                    `Perfect day for deep sea fishing! With ${weather.windSpeed}km/h winds and ${weather.visibility}km visibility, all fishing techniques are recommended. Water conditions are calm at ${weather.waveHeight}m wave height.`}
+                  {weather.fishingConditions === "Good" && 
+                    `Good fishing weather with manageable conditions. Wind speed of ${weather.windSpeed}km/h and ${weather.visibility}km visibility provide safe offshore opportunities. Wave height: ${weather.waveHeight}m.`}
+                  {weather.fishingConditions === "Fair" && 
+                    `Moderate conditions suitable for experienced anglers. Wind: ${weather.windSpeed}km/h, Visibility: ${weather.visibility}km, Waves: ${weather.waveHeight}m. Stay within familiar waters.`}
+                  {weather.fishingConditions === "Poor" && 
+                    `Challenging conditions detected. High winds (${weather.windSpeed}km/h) and reduced visibility (${weather.visibility}km) make offshore fishing risky. Consider shore-based alternatives.`}
+                  {weather.fishingConditions === "Dangerous" && 
+                    `Dangerous conditions - DO NOT FISH! Wind: ${weather.windSpeed}km/h, Visibility: ${weather.visibility}km, Waves: ${weather.waveHeight}m. Return to shore immediately if already out.`}
+                </Text>
+              </View>
+
+              {/* Detailed Weather-Based Recommendations */}
+              <View style={styles.detailedRecommendations}>
+                {/* Wind Conditions */}
+                <View style={styles.recommendationItem}>
+                  <Ionicons 
+                    name="flag" 
+                    size={16} 
+                    color={weather.windSpeed <= 15 ? weatherDesign.colors.success : weather.windSpeed <= 25 ? weatherDesign.colors.warning : weatherDesign.colors.error} 
+                  />
+                  <View style={styles.recommendationContent}>
+                    <Text style={styles.recommendationTitle}>Wind Analysis</Text>
+                    <Text style={styles.recommendationDetail}>
+                      {weather.windSpeed <= 10 && "Light winds - Perfect for trolling and drift fishing"}
+                      {weather.windSpeed > 10 && weather.windSpeed <= 20 && "Moderate winds - Good for anchored fishing, adjust for drift"}
+                      {weather.windSpeed > 20 && weather.windSpeed <= 30 && "Strong winds - Use heavier tackle, consider windward protection"}
+                      {weather.windSpeed > 30 && "Very high winds - Unsafe for small boats, postpone trip"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Visibility Impact */}
+                <View style={styles.recommendationItem}>
+                  <Ionicons 
+                    name="eye" 
+                    size={16} 
+                    color={weather.visibility >= 5 ? weatherDesign.colors.success : weather.visibility >= 2 ? weatherDesign.colors.warning : weatherDesign.colors.error} 
+                  />
+                  <View style={styles.recommendationContent}>
+                    <Text style={styles.recommendationTitle}>Visibility Impact</Text>
+                    <Text style={styles.recommendationDetail}>
+                      {weather.visibility >= 10 && "Excellent visibility - Safe for long-range navigation and offshore fishing"}
+                      {weather.visibility >= 5 && weather.visibility < 10 && "Good visibility - Maintain visual contact with landmarks"}
+                      {weather.visibility >= 2 && weather.visibility < 5 && "Reduced visibility - Use GPS, stay close to familiar areas"}
+                      {weather.visibility < 2 && "Poor visibility - Navigation hazard, avoid offshore fishing"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Wave Conditions */}
+                <View style={styles.recommendationItem}>
+                  <Ionicons 
+                    name="water" 
+                    size={16} 
+                    color={weather.waveHeight <= 1 ? weatherDesign.colors.success : weather.waveHeight <= 2 ? weatherDesign.colors.warning : weatherDesign.colors.error} 
+                  />
+                  <View style={styles.recommendationContent}>
+                    <Text style={styles.recommendationTitle}>Sea State</Text>
+                    <Text style={styles.recommendationDetail}>
+                      {weather.waveHeight <= 0.5 && "Calm seas - Ideal for all vessel sizes and fishing methods"}
+                      {weather.waveHeight > 0.5 && weather.waveHeight <= 1.5 && "Slight chop - Good for experienced anglers, secure equipment"}
+                      {weather.waveHeight > 1.5 && weather.waveHeight <= 2.5 && "Rough seas - Large boats only, expect challenging conditions"}
+                      {weather.waveHeight > 2.5 && "Very rough - Dangerous for recreational fishing, seek shelter"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Pressure Trends */}
+                <View style={styles.recommendationItem}>
+                  <Ionicons 
+                    name="speedometer" 
+                    size={16} 
+                    color={weather.pressure >= 1020 ? weatherDesign.colors.success : weather.pressure >= 1010 ? weatherDesign.colors.warning : weatherDesign.colors.error} 
+                  />
+                  <View style={styles.recommendationContent}>
+                    <Text style={styles.recommendationTitle}>Barometric Pressure</Text>
+                    <Text style={styles.recommendationDetail}>
+                      {weather.pressure >= 1020 && "High pressure - Stable weather, fish may be deeper, try bottom fishing"}
+                      {weather.pressure >= 1010 && weather.pressure < 1020 && "Normal pressure - Good fishing conditions across all depths"}
+                      {weather.pressure < 1010 && "Low pressure - Fish active near surface, weather may deteriorate"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Temperature Impact */}
+                <View style={styles.recommendationItem}>
+                  <Ionicons 
+                    name="thermometer" 
+                    size={16} 
+                    color={weatherDesign.colors.primary} 
+                  />
+                  <View style={styles.recommendationContent}>
+                    <Text style={styles.recommendationTitle}>Water Temperature</Text>
+                    <Text style={styles.recommendationDetail}>
+                      {weather.temperature >= 25 && "Warm water - Fish deeper waters during midday, early morning/evening best"}
+                      {weather.temperature >= 15 && weather.temperature < 25 && "Optimal temperature - Fish active at various depths throughout day"}
+                      {weather.temperature < 15 && "Cool water - Fish slower metabolism, use smaller baits, fish deeper"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* UV Protection */}
+                {weather.uvIndex > 6 && (
+                  <View style={styles.recommendationItem}>
+                    <Ionicons name="sunny" size={16} color={weatherDesign.colors.warning} />
+                    <View style={styles.recommendationContent}>
+                      <Text style={styles.recommendationTitle}>UV Protection</Text>
+                      <Text style={styles.recommendationDetail}>
+                        High UV index ({weather.uvIndex}) - Wear sunscreen, hat, and protective clothing. Seek shade during peak hours.
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Best Times Recommendation */}
+              <View style={styles.timingRecommendation}>
+                <Text style={styles.timingTitle}>🕐 Optimal Fishing Times</Text>
+                <Text style={styles.timingDetail}>
+                  {weather.fishingConditions === "Excellent" && "All day fishing recommended. Dawn (5:30-7:30 AM) and dusk (6:00-8:00 PM) for peak activity."}
+                  {weather.fishingConditions === "Good" && "Best windows: Early morning (6:00-9:00 AM) and late afternoon (4:00-7:00 PM)."}
+                  {weather.fishingConditions === "Fair" && "Short sessions recommended. Target dawn or dusk when conditions are most stable."}
+                  {(weather.fishingConditions === "Poor" || weather.fishingConditions === "Dangerous") && "Wait for weather improvement. Monitor conditions closely."}
+                </Text>
+              </View>
             </View>
           </>
         ) : (
@@ -462,8 +637,66 @@ const styles = StyleSheet.create({
     backgroundColor: weatherDesign.colors.surfaceSecondary,
   },
   scrollContent: {
-    paddingBottom: weatherDesign.spacing.xl,
+    paddingBottom: weatherDesign.spacing.xl * 2,
+    paddingHorizontal: weatherDesign.spacing.sm,
   },
+
+  // Enhanced Navigation Header Styles
+  navHeader: {
+    paddingBottom: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  navContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 15,
+  },
+  navBackButton: {
+    padding: 12,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  navTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  navTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  navSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  navActionButton: {
+    padding: 12,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  navLocationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    gap: 6,
+  },
+  navLocationText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+
   header: {
     paddingHorizontal: weatherDesign.spacing.md,
     paddingVertical: weatherDesign.spacing.lg,
@@ -537,6 +770,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: weatherDesign.spacing.md,
     gap: weatherDesign.spacing.sm,
     marginBottom: weatherDesign.spacing.md,
+    justifyContent: 'center',
   },
   metricCard: {
     width: (width - (weatherDesign.spacing.md * 2) - weatherDesign.spacing.sm) / 2,
@@ -752,5 +986,134 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: theme.primary,
+  },
+
+  // Enhanced Recommendation Styles
+  primaryRecommendation: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
+    padding: weatherDesign.spacing.lg,
+    marginHorizontal: weatherDesign.spacing.md,
+    marginBottom: weatherDesign.spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: weatherDesign.colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  conditionBadgeText: {
+    fontSize: Math.min(width * 0.035, 14),
+    fontWeight: '800',
+    color: weatherDesign.colors.primary,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  primaryRecommendationText: {
+    fontSize: Math.min(width * 0.04, 16),
+    color: weatherDesign.colors.text,
+    lineHeight: Math.min(width * 0.055, 22),
+    fontWeight: '500',
+  },
+  detailedRecommendations: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 16,
+    padding: weatherDesign.spacing.lg,
+    marginHorizontal: weatherDesign.spacing.md,
+    marginBottom: weatherDesign.spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  recommendationItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: weatherDesign.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  recommendationContent: {
+    flex: 1,
+  },
+  recommendationTitle: {
+    fontSize: Math.min(width * 0.035, 14),
+    fontWeight: '700',
+    color: weatherDesign.colors.text,
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  recommendationDetail: {
+    fontSize: Math.min(width * 0.032, 13),
+    color: weatherDesign.colors.textSecondary,
+    lineHeight: Math.min(width * 0.045, 18),
+  },
+  timingRecommendation: {
+    backgroundColor: 'rgba(15, 118, 110, 0.05)',
+    borderRadius: 16,
+    padding: weatherDesign.spacing.lg,
+    marginHorizontal: weatherDesign.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 118, 110, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  timingTitle: {
+    fontSize: Math.min(width * 0.04, 16),
+    fontWeight: '700',
+    color: weatherDesign.colors.primary,
+    marginBottom: 8,
+  },
+  timingDetail: {
+    fontSize: Math.min(width * 0.035, 14),
+    color: weatherDesign.colors.text,
+    lineHeight: Math.min(width * 0.045, 18),
+  },
+
+  // Bold Fishing Decision Styles
+  fishingDecisionCard: {
+    marginHorizontal: weatherDesign.spacing.md,
+    marginBottom: weatherDesign.spacing.lg,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  fishingDecisionGradient: {
+    padding: weatherDesign.spacing.xl,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: Math.min(width * 0.35, 140),
+  },
+  fishingDecisionTitle: {
+    fontSize: Math.min(width * 0.055, 22),
+    fontWeight: '900',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: weatherDesign.spacing.sm,
+    marginBottom: weatherDesign.spacing.xs,
+    letterSpacing: 1.2,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  fishingDecisionSubtitle: {
+    fontSize: Math.min(width * 0.038, 15),
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    marginTop: weatherDesign.spacing.xs,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
   },
 })

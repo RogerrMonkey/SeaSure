@@ -29,10 +29,8 @@ interface LoginScreenProps {
 export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPassword, onPhoneVerificationNeeded }: LoginScreenProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [phoneNumber, setPhoneNumber] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email')
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current
@@ -61,48 +59,27 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
   }, [])
 
   const handleLogin = async () => {
-    if (loginMethod === 'email') {
-      if (!email || !password) {
-        Alert.alert("Error", "Please fill in all fields")
-        return
-      }
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields")
+      return
+    }
 
-      if (!email.includes('@')) {
-        Alert.alert("Error", "Please enter a valid email address")
-        return
-      }
+    if (!email.includes('@')) {
+      Alert.alert("Error", "Please enter a valid email address")
+      return
+    }
 
-      if (password.length < 6) {
-        Alert.alert("Error", "Password must be at least 6 characters")
-        return
-      }
-    } else {
-      if (!phoneNumber) {
-        Alert.alert("Error", "Please enter your phone number")
-        return
-      }
-
-      if (phoneNumber.length < 10) {
-        Alert.alert("Error", "Please enter a valid phone number")
-        return
-      }
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters")
+      return
     }
 
     setIsLoading(true)
     
     try {
-      if (loginMethod === 'email') {
-        const user = await authService.signInWithEmail(email, password)
-        Alert.alert("Success", "Login successful!")
-        onLogin(user)
-      } else {
-        // Phone number login - redirect to OTP verification
-        if (onPhoneVerificationNeeded) {
-          onPhoneVerificationNeeded(phoneNumber)
-        } else {
-          Alert.alert("Error", "Phone verification not available")
-        }
-      }
+      const user = await authService.signInWithEmail(email, password)
+      Alert.alert("Success", "Login successful!")
+      onLogin(user)
     } catch (error: any) {
       console.error('Login error:', error)
       let errorMessage = "Login failed. Please try again."
@@ -118,26 +95,6 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
       }
       
       Alert.alert("Login Failed", errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setIsLoading(true)
-      const user = await authService.signInWithGoogle()
-      Alert.alert("Success", "Google Sign-In successful!")
-      onLogin(user)
-    } catch (error: any) {
-      console.error('Google Sign-In error:', error)
-      let errorMessage = "Google Sign-In failed."
-      
-      if (error.message.includes('additional setup')) {
-        errorMessage = "Google Sign-In requires additional setup in Firebase Console. Please use email/password login for now."
-      }
-      
-      Alert.alert("Google Sign-In", errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -196,119 +153,46 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
 
             {/* Login Form */}
             <View style={styles.formContainer}>
-              {/* Login Method Selector */}
-              <View style={styles.methodSelector}>
+              <View style={styles.inputContainer}>
+                <Ionicons name="mail-outline" size={20} color={theme.primary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#94a3b8"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons name="lock-closed-outline" size={20} color={theme.primary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#94a3b8"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
                 <TouchableOpacity
-                  style={[
-                    styles.methodButton,
-                    loginMethod === 'email' && styles.methodButtonActive
-                  ]}
-                  onPress={() => setLoginMethod('email')}
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
                 >
-                  <Ionicons 
-                    name="mail-outline" 
-                    size={20} 
-                    color={loginMethod === 'email' ? '#ffffff' : theme.primary} 
+                  <Ionicons
+                    name={showPassword ? "eye-outline" : "eye-off-outline"}
+                    size={20}
+                    color="#94a3b8"
                   />
-                  <Text style={[
-                    styles.methodButtonText,
-                    loginMethod === 'email' && styles.methodButtonTextActive
-                  ]}>
-                    Email
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.methodButton,
-                    loginMethod === 'phone' && styles.methodButtonActive
-                  ]}
-                  onPress={() => setLoginMethod('phone')}
-                >
-                  <Ionicons 
-                    name="call-outline" 
-                    size={20} 
-                    color={loginMethod === 'phone' ? '#ffffff' : theme.primary} 
-                  />
-                  <Text style={[
-                    styles.methodButtonText,
-                    loginMethod === 'phone' && styles.methodButtonTextActive
-                  ]}>
-                    Phone
-                  </Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Conditional Form Fields */}
-              {loginMethod === 'email' ? (
-                <>
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="mail-outline" size={20} color={theme.primary} style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Email"
-                      placeholderTextColor="#94a3b8"
-                      value={email}
-                      onChangeText={setEmail}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="lock-closed-outline" size={20} color={theme.primary} style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Password"
-                      placeholderTextColor="#94a3b8"
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      style={styles.eyeIcon}
-                    >
-                      <Ionicons
-                        name={showPassword ? "eye-outline" : "eye-off-outline"}
-                        size={20}
-                        color="#94a3b8"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="call-outline" size={20} color={theme.primary} style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Phone Number (+1234567890)"
-                      placeholderTextColor="#94a3b8"
-                      value={phoneNumber}
-                      onChangeText={setPhoneNumber}
-                      keyboardType="phone-pad"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                  </View>
-                  
-                  <View style={styles.phoneNote}>
-                    <Ionicons name="information-circle-outline" size={16} color="#94a3b8" />
-                    <Text style={styles.phoneNoteText}>
-                      You'll receive an OTP for verification. Offline verification is available for maritime areas.
-                    </Text>
-                  </View>
-                </>
-              )}
-
-              {loginMethod === 'email' && (
-                <TouchableOpacity onPress={onForgotPassword} style={styles.forgotPassword}>
-                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity onPress={onForgotPassword} style={styles.forgotPassword}>
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
 
               <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
                 <TouchableOpacity
@@ -333,20 +217,6 @@ export default function LoginScreen({ onLogin, onNavigateToRegister, onForgotPas
                   </LinearGradient>
                 </TouchableOpacity>
               </Animated.View>
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <TouchableOpacity 
-                style={styles.socialButton}
-                onPress={handleGoogleSignIn}
-              >
-                <Ionicons name="logo-google" size={20} color="#4285f4" />
-                <Text style={styles.socialButtonText}>Continue with Google</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Footer */}
@@ -471,39 +341,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#e2e8f0",
-  },
-  dividerText: {
-    marginHorizontal: 15,
-    color: "#64748b",
-    fontSize: 14,
-  },
-  socialButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  socialButtonText: {
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1e293b",
-  },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -517,49 +354,5 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
-  },
-  // Method selector styles
-  methodSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 20,
-  },
-  methodButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
-  methodButtonActive: {
-    backgroundColor: theme.primary,
-  },
-  methodButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.primary,
-  },
-  methodButtonTextActive: {
-    color: '#ffffff',
-  },
-  phoneNote: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  phoneNoteText: {
-    flex: 1,
-    fontSize: 12,
-    color: '#64748b',
-    lineHeight: 16,
   },
 })

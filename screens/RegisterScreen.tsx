@@ -28,7 +28,6 @@ interface RegisterScreenProps {
 export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneVerificationNeeded }: RegisterScreenProps) {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
-  const [phoneNumber, setPhoneNumber] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -63,18 +62,13 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
   }, [])
 
   const handleRegister = async () => {
-    if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
+    if (!fullName || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields")
       return
     }
 
     if (!email.includes('@')) {
       Alert.alert("Error", "Please enter a valid email address")
-      return
-    }
-
-    if (phoneNumber.length < 10) {
-      Alert.alert("Error", "Please enter a valid phone number")
       return
     }
 
@@ -99,20 +93,7 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
       const user = await authService.registerWithEmail(
         email,
         password,
-        fullName,
-        {
-          // Additional profile data
-          phoneNumber,
-          location: {
-            state: "",
-            port: ""
-          },
-          experience: {
-            yearsOfFishing: 0,
-            specialization: [],
-            preferredZones: []
-          }
-        }
+        fullName
       )
       
       Alert.alert(
@@ -121,7 +102,7 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
         [
           {
             text: "OK",
-            onPress: () => onRegister(user, phoneNumber)
+            onPress: () => onRegister(user)
           }
         ]
       )
@@ -227,20 +208,6 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Ionicons name="call-outline" size={20} color={theme.primary} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Phone Number"
-                  placeholderTextColor="#94a3b8"
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
@@ -355,17 +322,6 @@ export default function RegisterScreen({ onRegister, onNavigateToLogin, onPhoneV
                   </LinearGradient>
                 </TouchableOpacity>
               </Animated.View>
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or sign up with</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-google" size={20} color="#4285f4" />
-                <Text style={styles.socialButtonText}>Google</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Footer */}
@@ -536,38 +492,6 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#e2e8f0",
-  },
-  dividerText: {
-    marginHorizontal: 15,
-    color: "#64748b",
-    fontSize: 14,
-  },
-  socialButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  socialButtonText: {
-    marginLeft: 10,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1e293b",
   },
   footer: {
     flexDirection: "row",

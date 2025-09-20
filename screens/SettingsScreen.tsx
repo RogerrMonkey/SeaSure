@@ -6,8 +6,11 @@ import type { AppSettings } from "../types"
 import { theme } from "../theme/colors"
 import { trueOfflineOTP } from "../services/trueOfflineOTP"
 import { Ionicons } from "@expo/vector-icons"
+import LanguageSelector from "../components/LanguageSelector"
+import { useTranslation } from 'react-i18next'
 
 export default function SettingsScreen() {
+  const { t } = useTranslation()
   const [settings, setSettings] = useState<AppSettings>({ lowPowerMode: true, gpsPollSeconds: 60 })
   const [testPhoneNumber, setTestPhoneNumber] = useState("+1234567890")
 
@@ -91,7 +94,12 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <SectionTitle>Settings</SectionTitle>
+      <SectionTitle>{t('settings.title')}</SectionTitle>
+
+      {/* Language Selector */}
+      <Card style={{ marginBottom: 12 }}>
+        <LanguageSelector />
+      </Card>
 
       <Card style={{ marginBottom: 12 }}>
         <Text style={styles.label}>Low Power Mode</Text>

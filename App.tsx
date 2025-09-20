@@ -15,10 +15,13 @@ import { theme } from "./theme/colors"
 import { Ionicons } from "@expo/vector-icons"
 import { authService } from "./services/auth"
 import { User } from "firebase/auth"
+import './i18n' // Initialize i18n
+import { useTranslation } from 'react-i18next'
 
 const Tab = createBottomTabNavigator()
 
 export default function App() {
+  const { t } = useTranslation()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showProfile, setShowProfile] = useState(false)
@@ -125,12 +128,39 @@ export default function App() {
             },
           })}
         >
-          <Tab.Screen name="Map" component={MapScreen} />
-          <Tab.Screen name="Logbook" component={LogbookScreen} />
-          <Tab.Screen name="Weather" component={WeatherScreen} />
-          <Tab.Screen name="Trip" component={TripPlannerScreen} options={{ title: "Trip" }} />
-          <Tab.Screen name="Alerts" component={AlertsScreen} />
-          <Tab.Screen name="Settings" component={SettingsScreen} />
+          <Tab.Screen 
+            name="Map" 
+            component={MapScreen} 
+            options={{ title: t('navigation.map') }} 
+          />
+          <Tab.Screen 
+            name="Logbook" 
+            component={LogbookScreen} 
+            options={{ title: t('navigation.logbook') }} 
+          />
+          <Tab.Screen 
+            name="Weather" 
+            component={WeatherScreen} 
+            options={{ 
+              headerShown: false,
+              title: t('navigation.weather') 
+            }} 
+          />
+          <Tab.Screen 
+            name="Trip" 
+            component={TripPlannerScreen} 
+            options={{ title: t('navigation.trip_planner') }} 
+          />
+          <Tab.Screen 
+            name="Alerts" 
+            component={AlertsScreen} 
+            options={{ title: t('navigation.alerts') }} 
+          />
+          <Tab.Screen 
+            name="Settings" 
+            component={SettingsScreen} 
+            options={{ title: t('navigation.settings') }} 
+          />
         </Tab.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
